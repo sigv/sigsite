@@ -1,0 +1,34 @@
+{
+  "name": "sigsite",
+  "version": "1.0.0",
+  "description": "Static website hosting framework and sample in one",
+  "keywords": [
+    "static",
+    "website",
+    "hosting",
+    "framework"
+  ],
+  "homepage": "https://sigsite.herokuapp.com/",
+  "bugs": "https://github.com/sigv/sigsite/issues",
+  "license": "MIT",
+  "author": "Valter Strods <valters.strods@gmail.com>",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sigv/sigsite.git"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "compression": "^1.4.3",
+    "express": "^4.12.3",
+    "express-uncapitalize": "^1.0.0",
+    "mime": "^1.3.4",
+    "serve-favicon": "^2.2.0"
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "private": true
+}

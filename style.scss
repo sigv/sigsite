@@ -1,0 +1,124 @@
+@mixin vendor-prefix($name, $argument) {
+  -webkit-#{$name}: #{$argument};
+  -moz-#{$name}: #{$argument};
+  -ms-#{$name}: #{$argument};
+  -o-#{$name}: #{$argument};
+  #{$name}: #{$argument};
+}
+
+$fixed-width: 800px;
+
+* {
+  @include vendor-prefix(box-sizing, border-box);
+  @include vendor-prefix(transition, all .2s ease-in-out);
+  @include vendor-prefix(tap-highlight-color, transparent);
+  outline: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  text-align: center;
+  text-decoration: none;
+  color: #000;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+html, body, ul {
+  padding: 0;
+  margin: 0 auto;
+}
+
+html {
+  font-family: "Raleway", sans-serif;
+  font-size: 22px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 400;
+  font-stretch: normal;
+  line-height: 1.4em;
+}
+
+body > * {
+  display: block;
+  width: $fixed-width;
+  margin: 60px auto;
+}
+ 
+body > script {
+  display: none;
+}
+
+img {
+  height: auto;
+}
+
+ul li {
+  list-style: none;
+}
+
+strong, b {
+  font-weight: 400;
+  font-size: 28px;
+}
+
+small {
+  font-weight: 400;
+  font-size: 16px;
+}
+
+a:hover {
+  color: #888;
+}
+
+.selected {
+  color: #888;
+}
+
+.grayscale {
+  @include vendor-prefix(filter, grayscale(100%));
+}
+
+header, footer {
+  font-size: 16px;
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
+
+header {
+  > * {
+    margin: 0 auto 30px;
+  }
+
+  nav a {
+    display: inline-block;
+    width: 30%;
+    margin: 0;
+    padding: 5px;
+  }
+}
+
+div.video {
+  position: relative;
+  padding-top: 30px;
+  padding-bottom: 56.25%; // 16:9
+  height: 0;
+  overflow: hidden;
+  @extend .grayscale;
+
+  iframe, object, embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// screen and (width < $fixed-width)
+@media only screen and (max-width: $fixed-width) {
+  body > * {
+    width: 80%;
+  }
+}
