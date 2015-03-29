@@ -4,12 +4,7 @@
 
 ## What is this?
 
-Generally speaking, this is a static website delivery framework.
-
-* [static](https://en.wiktionary.org/wiki/static) - Unchanging; that cannot or does not change.
-* [website](https://en.wiktionary.org/wiki/website) - Alternative spelling of web site.
-* [delivery](https://en.wiktionary.org/wiki/delivery) - The act of conveying something.
-* [framework](https://en.wiktionary.org/wiki/framework) - (figuratively, especially in, computing) A basic conceptual structure.
+Generally speaking, this is a [static](https://en.wiktionary.org/wiki/static "Unchanging; that cannot or does not change.") [website](https://en.wiktionary.org/wiki/website "Alternative spelling of web site") [delivery](https://en.wiktionary.org/wiki/delivery "The act of conveying something.") [framework](https://en.wiktionary.org/wiki/framework "(figuratively, especially in, computing) A basic conceptual structure.").
 
 It also comes with an awesome simple sample site as a demonstration of the functionality.
 
