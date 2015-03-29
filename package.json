@@ -28,7 +28,7 @@
     "serve-favicon": "^2.2.0"
   },
   "engines": {
-    "node": "0.10.x"
+    "node": "0.12.x"
   },
   "private": true
 }
