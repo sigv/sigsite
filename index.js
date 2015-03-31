@@ -245,20 +245,89 @@ try {
   }
 }
 
+function send(res, data) {
+  if (typeof data === 'string') data = { 'data': data };
+  if (typeof data !== 'object' || data === null) return;
+  if (typeof data.data === 'undefined' || data.data === null) return;
+
+  res.set('X-Powered-By', 'sigsite');
+
+  res.set('Content-Type', typeof data.mimetype === 'string' ? data.mimetype : 'application/octet-stream');
+
+  if (data.cache === false || typeof data.cache === 'undefined') res.set('Cache-Control', 'no-cache');
+  else if (typeof data.cache === 'number') res.set('Cache-Control', 'max-age=' + data.cache);
+  else res.set('Cache-Control', 'max-age=0');
+
+  res.set('ETag', typeof data.tag === 'string' ? data.tag : getTag(data.data));
+
+  if (typeof data.headers === 'object' && data.headers !== null) {
+    for (var header in data.headers) {
+      if (!data.headers.hasOwnProperty(header)) continue;
+      res.set(header, data.headers[header]);
+    }
+  }
+
+  res.status(typeof data.status === 'number' ? data.status : 200);
+
+  res.send(data.data);
+}
+
+function sendRedirect(res, target) {
+  if (typeof target !== 'string') return;
+
+  send(res, {
+    'status': 301,
+    'data': '<!DOCTYPE html>\n<html lang="en">\n<head><title>Redirection</title></head><body><a href="' + target + '">' + target + '</body></html>',
+    'mimetype': 'text/html',
+    'cache': 0,
+    'headers': {
+      'Location': target,
+    },
+  });
+}
+
 app.use(function (req, res) {
+  // Initial parsing.
   var url = req.url || '/';
   if (url.split('/').pop() === '') url += 'index';
   var sectionUrl = url + (url.split('/').pop().indexOf('.') === -1 ? '.html' : '');
 
-  var mimetype = 'application/octet-stream';
-  var status = 404;
-  var data = '';
-  var tag = null;
+  // Get some normalization going on.
+  var nUrl = url, i = -1;
+  while (true) {
+    // Break things.
+    i++; // continue;
+    nUrl = nUrl.split('/');
 
+    var frag = nUrl[i];
+    if (i === 0) nUrl[i] = ''; // The URL should start with a / so there will be a nothing before that.
+    else if (frag === '.') nUrl[i] = ''; // Rip out single dots as implying the current directory.
+    else if (frag === '..') {
+      // Rip out double dots as implying the parent directory.
+      nUrl[i - 1] = nUrl[i] = '';
+      i = -1; // reset;
+    }
+
+    if (i >= nUrl.length) {
+      // We are done parsing.
+      nUrl = nUrl.join('/');
+      while (nUrl.indexOf('//') !== -1) nUrl = nUrl.split('//').join('/');
+      break;
+    } else {
+      // Clean up for next loop.
+      nUrl = nUrl.join('/');
+      while (nUrl.indexOf('//') !== -1) nUrl = nUrl.split('//').join('/');
+    }
+  }
+  while (nUrl.indexOf('//') !== -1) nUrl = nUrl.split('//').join('/');
+  if (url !== nUrl) {
+    sendRedirect(res, nUrl);
+    return;
+  }
+
+  // And we are ready to handle this!
   if (url === '/cache.mf') {
-    mimetype = 'text/cache-manifest';
-    status = 200;
-    data = 'CACHE MANIFEST\n# Offline all the things.\n';
+    var data = 'CACHE MANIFEST\n# Offline all the things.\n';
 
     data += '\n';
     for (var sk in sections) {
@@ -279,46 +348,55 @@ app.use(function (req, res) {
 
     data += '\nNETWORK:\n*\n';
 
+    send(res, {
+      'status': 200,
+      'data': data,
+      'mimetype': 'text/cache-manifest',
+      'cache': 0,
+    });
+
   } else if (typeof sections[sectionUrl] !== 'undefined') {
-    mimetype = mime.lookup(sectionUrl);
-    status = 200;
-    data = sections[sectionUrl].data;
+    // Redirect to make URLs more consistent and throw in extra SEO.
+    if (url.endsWith('.html')) {
+      sendRedirect(res, url.substr(0, url.length - 5 /* '.html'.length */));
+      return;
+    }
+
+    send(res, {
+      'status': 200,
+      'data': sections[sectionUrl].data,
+      'mimetype': mime.lookup(sectionUrl),
+      'tag': sections[sectionUrl].tag,
+      'cache': 0,
+    });
 
   } else if (typeof staticAssets[url] !== 'undefined') {
-    mimetype = mime.lookup(url);
-    status = 200;
-    data = staticAssets[url].data;
+    send(res, {
+      'status': 200,
+      'data': staticAssets[url].data,
+      'mimetype': mime.lookup(url),
+      'tag': staticAssets[url].tag,
+      'cache': 0,
+    });
 
   } else if (typeof sections['/404.html'] !== 'undefined') {
-    mimetype = 'text/html';
-    status = 404;
-    data = sections['/404.html'].data;
+    send(res, {
+      'status': 404,
+      'data': sections['/404.html'].data,
+      'mimetype': 'text/html',
+      'tag': sections['/404.html'].tag,
+      'cache': 0,
+    });
 
   } else {
-    mimetype = 'text/html';
-    status = 500;
-    data = template.replace('{{section}}', '<p>Something went wrong. Sorry.</p>').trimHtml();
+    send(res, {
+      'status': 500,
+      'data': template.replace('{{section}}', '<p>Something went wrong. Sorry.</p>').trimHtml(),
+      'mimetype': 'text/html',
+      'cache': 0,
+    });
 
   }
-
-  res.set('X-Powered-By', 'sigsite');
-
-  switch (mimetype.split(';')[0]) {
-  case 'text/html':
-  case 'text/cache-manifest':
-    res.set('Content-Type', mimetype);
-    break;
-  default:
-    res.set('Content-Type', mimetype);
-    break;
-  }
-
-  res.set('Cache-Control', 'max-age=0'); // AppCache will take care of this anyway.
-  res.set('ETag', tag === null ? getTag(data) : tag);
-
-  res.status(status);
-
-  res.send(data);
 });
 
 app.listen(app.get('port'), function () {
