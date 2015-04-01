@@ -287,6 +287,32 @@ function sendRedirect(res, target) {
 }
 
 app.use(function (req, res) {
+  var handleError = function (err, style) {
+    if (err !== true && (typeof err !== 'object' || err === null)) return false;
+
+    var out = {
+      'status': 500,
+      'cache': 0,
+    };
+
+    if (style === 'html') {
+      out.data = template.replace('{{section}}', '<p>Something went wrong. Sorry.</p>').trimHtml();
+      out.mimetype = 'text/html';
+    } else if (style === 'json') {
+      out.data = JSON.stringify({ 'error': 'SERVER_FAIL' });
+      out.mimetype = 'application/json';
+    } else {
+      out.data = 'Something went wrong. Sorry.';
+      out.mimetype = 'text/plain';
+    }
+
+    if (typeof err === 'object') {
+      console.error(err.toString());
+    }
+    send(res, out);
+    return true;
+  };
+
   // Initial parsing.
   var url = req.url || '/';
   if (url.split('/').pop() === '') url += 'index';
@@ -389,12 +415,7 @@ app.use(function (req, res) {
     });
 
   } else {
-    send(res, {
-      'status': 500,
-      'data': template.replace('{{section}}', '<p>Something went wrong. Sorry.</p>').trimHtml(),
-      'mimetype': 'text/html',
-      'cache': 0,
-    });
+    handleError(true, 'html');
 
   }
 });
